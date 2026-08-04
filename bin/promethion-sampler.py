@@ -24,7 +24,7 @@ parser.add_argument(
     "-s",
     type=str,
     required=True,
-    help="Name of the sample sheet, inside the specified 'directory'",
+    help="Path and name for the sample sheet",
 )
 
 parser.add_argument(
@@ -32,6 +32,14 @@ parser.add_argument(
     "-n",
     default=0,
     help="Sheet name or index for XLSX files (default: first sheet)",
+)
+
+parser.add_argument(
+    "--output_sheet",
+    "-o",
+    type=str,
+    required=True,
+    help="Path and name for the output sample sheet",
 )
 
 parser.add_argument(
@@ -46,6 +54,7 @@ args = parser.parse_args()
 directory = args.directory
 sample_sheet = args.sample_sheet
 sheet_name = args.sheet_name
+output_sheet = args.output_sheet
 rename_files = args.rename_files
 
 dir_pass = os.path.join(directory, "fastq_pass")
@@ -73,16 +82,16 @@ multiples_found = any(len(paths) > 1 for paths in found_dirs.values())
 if multiples_found:
     sys.exit(
         "Aborting: multiple 'fastq_fail' or 'fastq_pass' directories were found. ",
-        "Please ensure specified 'directory' contains only one 'fastq_pass' and one 'fastq_fail' directory.",
+        "Please ensure specified 'directory' contains only one 'fastq_pass' and one 'fastq_fail' directory."
     )
 
 
 # Check file extension and read sample sheet
 ext = sample_sheet.rsplit(".", 1)[-1].lower()
 if ext == "xlsx":
-    df1 = pd.read_excel(os.path.join(directory, sample_sheet), sheet_name=sheet_name)
+    df1 = pd.read_excel(os.path.join(sample_sheet), sheet_name=sheet_name)
 elif ext == "csv":
-    df1 = pd.read_csv(os.path.join(directory, sample_sheet))
+    df1 = pd.read_csv(os.path.join(sample_sheet))
 else:
     sys.exit(
         f"Unsupported file format: '.{ext}'. Please provide a '.csv' or '.xlsx' file."
@@ -105,8 +114,8 @@ for sample in df1["sample_id"]:
     if not valid_id.match(sample):
         bad_samples.append(sample)
 
-# if len(bad_samples) > 0:
-#     sys.exit(f"Found {len(bad_samples)} bad sample ID(s): {', '.join(bad_samples)}")
+if len(bad_samples) > 0:
+    sys.exit(f"Found {len(bad_samples)} bad sample ID(s): {', '.join(bad_samples)}")
 
 
 # Rename directories and files
@@ -114,7 +123,6 @@ print(f"Renaming {df1.shape[0]} sample directories")
 for index, row in df1.iterrows():
     # Rename the directory containing the fastq files for each sample
     # print(f"\t{row['sample_id']}")
-
     try:
         os.rename(
             src=os.path.join(dir_pass, row["barcode"]),
@@ -165,8 +173,7 @@ for index, row in df1.iterrows():
 
 
 # Create new sample sheet for input to Samnsero
-new_name = sample_sheet.replace("." + ext, "_samnsero.csv")
-print(f"\nSaving new sample sheet to '{new_name}'")
+print(f"\nSaving new sample sheet to '{output_sheet}'")
 df2 = df1[["sample_id"]]
 df2["data_path"] = dir_pass + "/" + df2["sample_id"] + "/"
-df2.to_csv(os.path.join(directory, new_name), header=False, index=False)
+df2.to_csv(os.path.join(output_sheet), header=False, index=False)
