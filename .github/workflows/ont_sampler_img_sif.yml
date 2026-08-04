@@ -13,7 +13,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build-test-containers:
+  build-containers:
     runs-on: ubuntu-latest
 
     container:
@@ -22,18 +22,38 @@ jobs:
 
     steps:
 
-      - name: Check out code for the container builds
-        uses: actions/checkout@v2 
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Install Apptainer
+        run: |
+          wget -q \
+            "https://github.com/apptainer/apptainer/releases/download/v${APPTAINER_VERSION}/apptainer_${APPTAINER_VERSION}_amd64.deb"
+
+          sudo apt-get update
+          sudo apt-get install -y \
+            "./apptainer_${APPTAINER_VERSION}_amd64.deb"
+
+          apptainer --version
 
       - name: Build Container
         working-directory: ./modules/local/ont_sampler/
         env:
           recipe: singularity.def
         run: |
-            sudo -E singularity build container.sif ${{ env.recipe }}
+            sudo -E apptainer build container.sif ${{ env.recipe }}
 
-      - name: Login and Deploy Container
+      - name: Log in to GHCR
+        run: |
+          echo "${{ secrets.MY_PAT }}" |
+            apptainer registry login \
+              --username "${{ secrets.GHCR_USERNAME }}" \
+              --password-stdin \
+              oras://ghcr.io
+
+      - name: Push container
         working-directory: ./modules/local/ont_sampler/
-        run: |         
-            echo ${{ secrets.MY_PAT }} | singularity remote login -u ${{ secrets.GHCR_USERNAME }} --password-stdin oras://ghcr.io
-            singularity push container.sif oras://ghcr.io/${{ env.img_name }}:latest
+        run: |
+          apptainer push \
+            container.sif \
+            "oras://ghcr.io/${{ env.img_name }}:latest"
