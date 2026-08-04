@@ -1,10 +1,5 @@
 # NOVA: Toolkit for Nanopore data Organization, Validation and Assessment
 
-[![Open in GitHub Codespaces](https://img.shields.io/badge/Open_In_GitHub_Codespaces-black?labelColor=grey&logo=github)](https://github.com/codespaces/new/SFU-Lee-Lab/nova)
-[![GitHub Actions CI Status](https://github.com/SFU-Lee-Lab/nova/actions/workflows/nf-test.yml/badge.svg)](https://github.com/SFU-Lee-Lab/nova/actions/workflows/nf-test.yml)
-[![GitHub Actions Linting Status](https://github.com/SFU-Lee-Lab/nova/actions/workflows/linting.yml/badge.svg)](https://github.com/SFU-Lee-Lab/nova/actions/workflows/linting.yml)
-[![nf-test](https://img.shields.io/badge/unit_tests-nf--test-337ab7.svg)](https://www.nf-test.com)
-
 [![Nextflow](https://img.shields.io/badge/version-%E2%89%A525.10.4-green?style=flat&logo=nextflow&logoColor=white&color=%230DC09D&link=https%3A%2F%2Fnextflow.io)](https://www.nextflow.io/)
 [![nf-core template version](https://img.shields.io/badge/nf--core_template-4.0.3-green?style=flat&logo=nfcore&logoColor=white&color=%2324B064&link=https%3A%2F%2Fnf-co.re)](https://github.com/nf-core/tools/releases/tag/4.0.3)
 [![run with docker](https://img.shields.io/badge/run%20with-docker-0db7ed?labelColor=000000&logo=docker)](https://www.docker.com/)
@@ -46,7 +41,7 @@ Now, you can run the pipeline using:
 nextflow run SFU-Lee-Lab/NOVA \
    -profile <docker/singularity/.../institute> \
    --input samplesheet.csv \
-   --outdir <OUTDIR>
+   --out_dir <out_dir>
 ```
 
 > [!WARNING]
