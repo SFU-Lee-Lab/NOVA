@@ -6,10 +6,12 @@ process ONT_SAMPLER {
         'docker.io/jimmyliu1326/ont_sampler:latest' }"
 
     input:
-    tuple val(meta), path(tsv)
+    tuple val(meta), path(sheet)
+    path(directory)
 
     output:
     tuple val(meta), path("*.csv")                               , emit: csv
+    path "*.log"                                                 , emit: log
     path "versions.yml"                                          , emit: versions
 
     when:
@@ -20,9 +22,11 @@ process ONT_SAMPLER {
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
     promethion-sampler.py \
-        -d ${directory} \
         -s ${sheet} \
-        ${args}
+        -d ${directory} \
+        -o ${prefix}_samnsero.csv \
+        ${args} \
+        |& tee ont_sampler.log
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
@@ -38,13 +42,12 @@ process ONT_SAMPLER {
     //               Simple example: https://github.com/nf-core/modules/blob/818474a292b4860ae8ff88e149fbcda68814114d/modules/nf-core/bcftools/annotate/main.nf#L47-L63
     //               Complex example: https://github.com/nf-core/modules/blob/818474a292b4860ae8ff88e149fbcda68814114d/modules/nf-core/bedtools/split/main.nf#L38-L54
     """
-    touch ${prefix}.tsv
-    mkdir -p logs
-    touch logs/samnsorter.log
+    touch ${prefix}.csv
+    touch ont_sampler.log
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        samnsorter: \$(SamnSorter.R --version |& sed '1!d ; s/samnsorter v//')
+        Python: \$(python3 --version | sed 's/Python //g')
     END_VERSIONS
     """
 }
