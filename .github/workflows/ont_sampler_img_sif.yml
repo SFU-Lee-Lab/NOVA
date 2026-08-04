@@ -26,7 +26,10 @@ jobs:
         env:
           recipe: singularity.def
         run: |
-            sudo -E apptainer build container.sif ${{ env.recipe }}
+            sudo env \
+              HOME=/root \
+              APPTAINER_CACHEDIR=/tmp/apptainer-cache \
+              sudo -E apptainer build container.sif ${{ env.recipe }}
 
       - name: Log in to GHCR
         run: |
