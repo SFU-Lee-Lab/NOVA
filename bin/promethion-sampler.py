@@ -28,10 +28,11 @@ parser.add_argument(
 )
 
 parser.add_argument(
-    "--sheet_name",
+    "--sheet_number",
     "-n",
-    default=0,
-    help="Sheet name or index for XLSX files (default: first sheet)",
+    default=1,
+    type=int,
+    help="Sheet number for XLSX files (default: first sheet, 1)",
 )
 
 parser.add_argument(
@@ -53,7 +54,7 @@ args = parser.parse_args()
 
 directory = args.directory
 sample_sheet = args.sample_sheet
-sheet_name = args.sheet_name
+sheet_number = args.sheet_number
 output_sheet = args.output_sheet
 rename_files = args.rename_files
 
@@ -89,7 +90,7 @@ if multiples_found:
 # Check file extension and read sample sheet
 ext = sample_sheet.rsplit(".", 1)[-1].lower()
 if ext == "xlsx":
-    df1 = pd.read_excel(os.path.join(sample_sheet), sheet_name=sheet_name)
+    df1 = pd.read_excel(os.path.join(sample_sheet), sheet_name=sheet_number-1)
 elif ext == "csv":
     df1 = pd.read_csv(os.path.join(sample_sheet))
 else:
