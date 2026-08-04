@@ -35,7 +35,7 @@
         },
         "sheet_number": {
           "type": "integer",
-          "default": "1",
+          "default": 1,
           "description": "Specify which sheet should be parsed, if the input is an Excel sheet. Indicate the sheet number (must be an integer)."
         },
         "rename_fastq": {
