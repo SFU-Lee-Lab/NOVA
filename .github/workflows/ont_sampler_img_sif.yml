@@ -8,6 +8,7 @@ on:
 
 env:
   img_name: jimmyliu1326/ont_sampler
+  APPTAINER_VERSION: 1.4.3
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
