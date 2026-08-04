@@ -27,6 +27,21 @@
           "default": "./output",
           "fa_icon": "fas fa-folder",
           "description": "Path to pipeline output directory"
+        },
+        "data_directory": {
+          "type": "string",
+          "format": "directory-path",
+          "description": "Path to the directory containing the sequencing experiment FASTQ files. The directory should contain fastq_pass and fastq_fail subdirectories."
+        },
+        "sheet_number": {
+          "type": "integer",
+          "default": "1",
+          "description": "Specify which sheet should be parsed, if the input is an Excel sheet. Indicate the sheet number (must be an integer)."
+        },
+        "rename_fastq": {
+          "type": "boolean",
+          "default": false,
+          "description": "Indicate if the individual FASTQ files should be renamed according to the sample IDs in the input samplesheet. [Default: false]"
         }
       }
     },
