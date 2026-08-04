@@ -3,6 +3,7 @@
   "$id": "https://raw.githubusercontent.com/SFU-Lee-Lab/nova/master/nextflow_schema.json",
   "title": "SFU-Lee-Lab/NOVA pipeline parameters",
   "description": "Toolkit for Nanopore data Organization, Validation and Assessment",
+  "nextflow_schema_version": "1.0",
   "type": "object",
   "definitions": {
     "input_output_options": {
