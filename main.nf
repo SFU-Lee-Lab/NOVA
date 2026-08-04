@@ -40,7 +40,7 @@ workflow SFULEELAB_NOVA {
         params.multiqc_config,
         params.multiqc_logo,
         params.multiqc_methods_description,
-        params.outdir,
+        params.out_dir,
     )
     emit:
     multiqc_report = NOVA.out.multiqc_report // channel: /path/to/multiqc_report.html
@@ -59,14 +59,13 @@ workflow {
     //
     PIPELINE_INITIALISATION (
         params.version,
+        params.help,
         params.validate_params,
         params.monochrome_logs,
         args,
-        params.outdir,
+        params.out_dir,
         params.input,
-        params.help,
-        params.help_full,
-        params.show_hidden
+        true
     )
 
     //
@@ -78,9 +77,9 @@ workflow {
     //
     // SUBWORKFLOW: Run completion tasks
     //
-    PIPELINE_COMPLETION (
-        params.monochrome_logs,
-    )
+    // PIPELINE_COMPLETION (
+    //     params.monochrome_logs,
+    // )
 }
 
 /*
