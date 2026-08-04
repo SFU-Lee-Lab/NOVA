@@ -24,7 +24,7 @@ parser.add_argument(
     "-s",
     type=str,
     required=True,
-    help="Path and name for the sample sheet",
+    help="Path and name for the sample sheet (CSV or XLSX)",
 )
 
 parser.add_argument(
@@ -39,7 +39,7 @@ parser.add_argument(
     "-o",
     type=str,
     required=True,
-    help="Path and name for the output sample sheet",
+    help="Path and name for the output CSV sample sheet",
 )
 
 parser.add_argument(
