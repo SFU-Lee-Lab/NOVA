@@ -1,10 +1,10 @@
 {
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$schema": "http://json-schema.org/draft-07/schema",
   "$id": "https://raw.githubusercontent.com/SFU-Lee-Lab/nova/master/nextflow_schema.json",
-  "title": "SFU-Lee-Lab/nova pipeline parameters",
+  "title": "SFU-Lee-Lab/NOVA pipeline parameters",
   "description": "Toolkit for Nanopore data Organization, Validation and Assessment",
   "type": "object",
-  "$defs": {
+  "definitions": {
     "input_output_options": {
       "title": "Input/output options",
       "type": "object",
@@ -15,7 +15,6 @@
         "input": {
           "type": "string",
           "format": "file-path",
-          "exists": true,
           "schema": "assets/schema_input.json",
           "mimetype": "text/csv",
           "pattern": "^\\S+\\.csv$",
@@ -166,29 +165,32 @@
           "hidden": true
         },
         "help": {
-          "type": ["boolean", "string"],
-          "description": "Display the help message."
+          "type": "boolean",
+          "description": "Display the help message.",
+          "hidden": true
         },
         "help_full": {
           "type": "boolean",
-          "description": "Display the full detailed help message."
+          "description": "Display the full detailed help message.",
+          "hidden": true
         },
         "show_hidden": {
           "type": "boolean",
-          "description": "Display hidden parameters in the help message (only works when --help or --help_full are provided)."
+          "description": "Display hidden parameters in the help message (only works when --help or --help_full are provided).",
+          "hidden": true
         }
       }
     }
   },
   "allOf": [
     {
-      "$ref": "#/$defs/input_output_options"
+      "$ref": "#/definitions/input_output_options"
     },
     {
-      "$ref": "#/$defs/institutional_config_options"
+      "$ref": "#/definitions/institutional_config_options"
     },
     {
-      "$ref": "#/$defs/generic_options"
+      "$ref": "#/definitions/generic_options"
     }
   ]
 }
