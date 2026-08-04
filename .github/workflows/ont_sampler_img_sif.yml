@@ -16,12 +16,7 @@ jobs:
   build-containers:
     runs-on: ubuntu-latest
 
-    container:
-      image: quay.io/singularity/singularity:v3.8.1
-      options: --privileged
-
     steps:
-
       - name: Check out code
         uses: actions/checkout@v4
 
