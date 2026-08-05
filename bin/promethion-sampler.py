@@ -58,6 +58,9 @@ sheet_number = args.sheet_number
 output_sheet = args.output_sheet
 rename_files = args.rename_files
 
+# Make sure we have a true, absolute path, not a symlink
+directory = str(Path(directory).resolve())
+
 dir_pass = os.path.abspath(os.path.join(directory, "fastq_pass"))
 dir_fail = os.path.abspath(os.path.join(directory, "fastq_fail"))
 
