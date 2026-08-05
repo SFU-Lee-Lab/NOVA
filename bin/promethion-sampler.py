@@ -58,8 +58,8 @@ sheet_number = args.sheet_number
 output_sheet = args.output_sheet
 rename_files = args.rename_files
 
-dir_pass = os.path.join(directory, "fastq_pass")
-dir_fail = os.path.join(directory, "fastq_fail")
+dir_pass = os.path.abspath(os.path.join(directory, "fastq_pass"))
+dir_fail = os.path.abspath(os.path.join(directory, "fastq_fail"))
 
 
 # Check if specified directory exists
