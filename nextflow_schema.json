@@ -11,7 +11,7 @@
       "type": "object",
       "fa_icon": "fas fa-terminal",
       "description": "Define where the pipeline should find input data and save output data.",
-      "required": ["input", "out_dir"],
+      "required": ["input", "out_dir", "data_directory"],
       "properties": {
         "input": {
           "type": "string",
@@ -164,7 +164,7 @@
         "validate_params": {
           "type": "boolean",
           "description": "Boolean whether to validate parameters against the schema at runtime",
-          "default": true,
+          "default": false,
           "fa_icon": "fas fa-check-square",
           "hidden": true
         },
