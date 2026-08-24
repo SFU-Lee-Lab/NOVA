@@ -55,19 +55,22 @@ output_sheet = args.output_sheet
 directory = str(Path(directory).resolve())
 
 dir_pass = os.path.abspath(os.path.join(directory, "fastq_pass"))
+dir_pass_link = os.path.abspath(os.path.join(directory, "fastq_pass_link"))
+
 dir_fail = os.path.abspath(os.path.join(directory, "fastq_fail"))
+dir_fail_link = os.path.abspath(os.path.join(directory, "fastq_fail_link"))
 
 
 # Check if specified directory exists
 if not os.path.isdir(directory):
-    sys.exit("Specified directory does not exist.")
+    sys.exit("\n=> ERROR: Specified directory does not exist.")
 
 
 # Check that target directory contains only one "fastq_pass" and one "fastq_fail" folder
 target_dirs = ["fastq_pass", "fastq_fail"]
 found_dirs = {name: list(Path(directory).rglob(name)) for name in target_dirs}
 for name, paths in found_dirs.items():
-    print(f"Found {len(paths)} '{name}' director{'y' if len(paths) == 1 else 'ies'}:")
+    print(f"=> Found {len(paths)} '{name}' director{'y' if len(paths) == 1 else 'ies'}:")
     for p in paths:
         print(f"\t{p}")
 
@@ -76,8 +79,9 @@ for name, paths in found_dirs.items():
 multiples_found = any(len(paths) > 1 for paths in found_dirs.values())
 if multiples_found:
     sys.exit(
-        "Aborting: multiple 'fastq_fail' or 'fastq_pass' directories were found. ",
-        "Please ensure specified 'directory' contains a single 'fastq_pass' and 'fastq_fail' sub-directory."
+        "=> ERROR: multiple 'fastq_fail' or 'fastq_pass' directories were found. ",
+        "Please ensure specified 'directory' contains a single 'fastq_pass' and ",
+        "'fastq_fail' sub-directory."
     )
 
 
@@ -89,14 +93,14 @@ elif ext == "csv":
     df1 = pd.read_csv(os.path.join(sample_sheet))
 else:
     sys.exit(
-        f"Unsupported file format: '.{ext}'. Please provide a '.csv' or '.xlsx' file."
+        f"=> ERROR: Unsupported file format '.{ext}'. Please provide a '.csv' or '.xlsx' file."
     )
 
 
 # Check for column names
 for c in ["sample_id", "barcode"]:
     if not c in df1.columns:
-        sys.exit(f"Sample sheet is missing column {c}")
+        sys.exit(f"=> ERROR: Sample sheet is missing column {c}")
 
 
 # Validate sample IDs. They should start with 2-5 uppercase letters, then 2-5 numbers.
@@ -110,35 +114,39 @@ for sample in df1["sample_id"]:
         bad_samples.append(sample)
 
 if len(bad_samples) > 0:
-    sys.exit(f"Found {len(bad_samples)} bad sample ID(s): {', '.join(bad_samples)}")
+    sys.exit(f"\n=> ERROR: found {len(bad_samples)} bad sample ID(s): {', '.join(bad_samples)}")
 
 
 # Rename directories and files
-print(f"Renaming {df1.shape[0]} sample directories")
+print(f"=> Creating {df1.shape[0]} linked directories")
+
+os.mkdir(dir_pass_link)
+os.mkdir(dir_fail_link)
+
 for index, row in df1.iterrows():
     try:
-        os.rename(
+        os.symlink(
             src=os.path.join(dir_pass, row["barcode"]),
-            dst=os.path.join(dir_pass, row["sample_id"]),
+            dst=os.path.join(dir_pass_link, row["sample_id"]),
         )
     except FileNotFoundError:
-        print(f"No directory '{row['barcode']}' was found in {dir_pass}, skipping")
+        print(f"=> ERROR: No directory '{row['barcode']}' was found in {dir_pass}, skipping")
     except OSError:
-        print(f"Directory '{row['sample_id']}' already exists in {dir_pass} and is non-empty, skipping")
+        print(f"=> ERROR: Link '{row['sample_id']}' already exists in {dir_pass}, skipping")
 
     try:
-        os.rename(
+        os.symlink(
             src=os.path.join(dir_fail, row["barcode"]),
-            dst=os.path.join(dir_fail, row["sample_id"]),
+            dst=os.path.join(dir_fail_link, row["sample_id"]),
         )
     except FileNotFoundError:
-        print(f"No directory '{row['barcode']}' was found in {dir_fail}, skipping")
+        print(f"=> ERROR: No directory '{row['barcode']}' was found in {dir_fail}, skipping")
     except OSError:
-        print(f"Directory '{row['sample_id']}' already exists in {dir_fail} and is non-empty, skipping")
+        print(f"=> ERROR: Link '{row['sample_id']}' already exists in {dir_fail}, skipping")
 
 
 # Create new sample sheet for input to Samnsero
-print(f"\nSaving new sample sheet to '{output_sheet}'")
+print(f"=> Saving new sample sheet to '{output_sheet}'")
 df2 = df1[["sample_id"]]
 df2["data_path"] = dir_pass + "/" + df2["sample_id"] + "/"
 df2.to_csv(os.path.join(output_sheet), header=False, index=False)
