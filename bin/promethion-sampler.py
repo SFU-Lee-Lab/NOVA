@@ -58,6 +58,7 @@ sheet_number = args.sheet_number
 output_sheet = args.output_sheet
 rename_files = args.rename_files
 
+
 # Make sure we have a true, absolute path, not a symlink
 directory = str(Path(directory).resolve())
 
@@ -69,9 +70,6 @@ dir_fail = os.path.abspath(os.path.join(directory, "fastq_fail"))
 if not os.path.isdir(directory):
     sys.exit("Specified directory does not exist.")
 
-if not os.path.isdir(dir_pass):
-    sys.exit("Specified directory does not contain sub-directory 'fastq_pass'.")
-
 
 # Check that target directory contains only one "fastq_pass" and one "fastq_fail" folder
 target_dirs = ["fastq_pass", "fastq_fail"]
@@ -81,12 +79,13 @@ for name, paths in found_dirs.items():
     for p in paths:
         print(f"\t{p}")
 
+
 # Check for presence of multiple fastq_fail and fastq_pass directories
 multiples_found = any(len(paths) > 1 for paths in found_dirs.values())
 if multiples_found:
     sys.exit(
         "Aborting: multiple 'fastq_fail' or 'fastq_pass' directories were found. ",
-        "Please ensure specified 'directory' contains only one 'fastq_pass' and one 'fastq_fail' directory."
+        "Please ensure specified 'directory' contains a single 'fastq_pass' and 'fastq_fail' sub-directory."
     )
 
 
@@ -125,8 +124,6 @@ if len(bad_samples) > 0:
 # Rename directories and files
 print(f"Renaming {df1.shape[0]} sample directories")
 for index, row in df1.iterrows():
-    # Rename the directory containing the fastq files for each sample
-    # print(f"\t{row['sample_id']}")
     try:
         os.rename(
             src=os.path.join(dir_pass, row["barcode"]),
@@ -147,7 +144,7 @@ for index, row in df1.iterrows():
     except OSError:
         print(f"Directory '{row['sample_id']}' already exists in {dir_fail} and is non-empty, skipping")
 
-    # Find and rename the files within each directory
+    # Find and rename the files WITHIN each directory
     if rename_files:
         files_pass = natsorted(
             glob.glob(os.path.join(dir_pass, row["sample_id"], "*.fastq.gz"))
