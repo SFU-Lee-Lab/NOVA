@@ -43,20 +43,12 @@ parser.add_argument(
     help="Path and name for the output CSV sample sheet",
 )
 
-parser.add_argument(
-    "--rename_files",
-    "-r",
-    action="store_true",
-    help="If added/enabled, rename the fastq files to match sample names (default: disabled)",
-)
-
 args = parser.parse_args()
 
 directory = args.directory
 sample_sheet = args.sample_sheet
 sheet_number = args.sheet_number
 output_sheet = args.output_sheet
-rename_files = args.rename_files
 
 
 # Make sure we have a true, absolute path, not a symlink
@@ -143,34 +135,6 @@ for index, row in df1.iterrows():
         print(f"No directory '{row['barcode']}' was found in {dir_fail}, skipping")
     except OSError:
         print(f"Directory '{row['sample_id']}' already exists in {dir_fail} and is non-empty, skipping")
-
-    # Find and rename the files WITHIN each directory
-    if rename_files:
-        files_pass = natsorted(
-            glob.glob(os.path.join(dir_pass, row["sample_id"], "*.fastq.gz"))
-        )
-        for index, file in enumerate(files_pass):
-            os.rename(
-                src=os.path.join(dir_pass, file),
-                dst=os.path.join(
-                    dir_pass,
-                    row["sample_id"],
-                    "".join([row["sample_id"], "_", str(index), ".fastq.gz"]),
-                ),
-            )
-
-        files_fail = natsorted(
-            glob.glob(os.path.join(dir_fail, row["sample_id"], "*.fastq.gz"))
-        )
-        for index, file in enumerate(files_fail):
-            os.rename(
-                src=os.path.join(dir_fail, file),
-                dst=os.path.join(
-                    dir_fail,
-                    row["sample_id"],
-                    "".join([row["sample_id"], "_", str(index), ".fastq.gz"]),
-                ),
-            )
 
 
 # Create new sample sheet for input to Samnsero
