@@ -150,8 +150,12 @@ if len(bad_samples) > 0:
 print(f"=> Creating {df1.shape[0]} linked directories")
 
 # Use os.makedirs() because it supports recursive creation
-os.makedirs(dir_pass_link)
-os.makedirs(dir_fail_link)
+# Only make the "link" directories if the corresponding original directory exists
+if os.path.isdir(dir_pass):
+    os.makedirs(dir_pass_link, exist_ok=True)
+
+if os.path.isdir(dir_fail):
+    os.makedirs(dir_fail_link, exist_ok=True)
 
 for index, row in df1.iterrows():
     try:
