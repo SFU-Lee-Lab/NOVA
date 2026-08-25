@@ -49,7 +49,7 @@ nextflow run SFU-Lee-Lab/NOVA \
 
 ## Credits
 
-SFU-Lee-Lab/NOVA was originally written by Jimmy Liu, Jonathan Ho, Travis Blimkie.
+SFU-Lee-Lab/NOVA was originally written by Jimmy Liu, Jonathan Ho, & Travis Blimkie.
 
 ## Contributions and Support
 
