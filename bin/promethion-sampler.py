@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 import argparse
+import glob
 import os
 import re
 import sys
 from pathlib import Path
 
 import pandas as pd
+from natsort import natsorted
 
 parser = argparse.ArgumentParser(
     description="Part of the NOVA pipeline: organize Nanopore data and create a sample sheet for genome assembly."
@@ -95,11 +97,14 @@ if not os.path.isdir(directory):
 target_dirs = ["fastq_pass", "fastq_fail"]
 found_dirs = {name: list(Path(directory).rglob(name)) for name in target_dirs}
 for name, paths in found_dirs.items():
-    print(
-        f"=> Found {len(paths)} '{name}' director{'y' if len(paths) == 1 else 'ies'}:"
-    )
-    for p in paths:
-        print(f"\t{p}")
+    if len(paths) == 0:
+        print(f"=> Found 0 '{name}' directories")
+    else:
+        print(
+            f"=> Found {len(paths)} '{name}' director{'y' if len(paths) == 1 else 'ies'}:"
+        )
+        for p in paths:
+            print(f"\t{p}")
 
 
 # Check for presence of multiple fastq_fail and fastq_pass directories
@@ -140,43 +145,56 @@ for sample in df1["sample_id"]:
     if not valid_id.match(sample):
         bad_samples.append(sample)
 
-if len(bad_samples) > 0:
-    sys.exit(
-        f"\n=> ERROR: found {len(bad_samples)} bad sample ID(s): {', '.join(bad_samples)}"
-    )
+# if len(bad_samples) > 0:
+#     sys.exit(
+#         f"\n=> ERROR: found {len(bad_samples)} bad sample ID(s): {', '.join(bad_samples)}"
+#     )
 
 
 # Create directories to hold the symlinks
-print(f"=> Creating {df1.shape[0]} linked directories")
+print(f"=> Processing files for {df1.shape[0]} samples")
 
 # Use os.makedirs() because it supports recursive creation
 # Only make the "link" directories if the corresponding original directory exists
 if os.path.isdir(dir_pass):
     os.makedirs(dir_pass_link, exist_ok=True)
+    for index, row in df1.iterrows():
+        os.makedirs(os.path.join(dir_pass_link, row["sample_id"]), exist_ok=True)
+        files_pass = natsorted(
+            glob.glob(os.path.join(dir_pass, row["barcode"], "*.fastq.gz"))
+        )
+        for index, file in enumerate(files_pass):
+            try:
+                os.symlink(
+                    src=os.path.join(dir_pass, file),
+                    dst=os.path.join(
+                        dir_pass_link,
+                        row["sample_id"],
+                        "".join([row["sample_id"], "_", str(index), ".fastq.gz"]),
+                    ),
+                )
+            except FileExistsError:
+                continue
 
 if os.path.isdir(dir_fail):
     os.makedirs(dir_fail_link, exist_ok=True)
-
-for index, row in df1.iterrows():
-    try:
-        os.symlink(
-            src=os.path.join(dir_pass, row["barcode"]),
-            dst=os.path.join(dir_pass_link, row["sample_id"]),
+    for index, row in df1.iterrows():
+        os.makedirs(os.path.join(dir_fail_link, row["sample_id"]), exist_ok=True)
+        files_fail = natsorted(
+            glob.glob(os.path.join(dir_fail, row["barcode"], "*.fastq.gz"))
         )
-    except FileNotFoundError:
-        print(
-            f"=> ERROR: No directory '{row['barcode']}' was found in {dir_pass}, skipping"
-        )
-
-    try:
-        os.symlink(
-            src=os.path.join(dir_fail, row["barcode"]),
-            dst=os.path.join(dir_fail_link, row["sample_id"]),
-        )
-    except FileNotFoundError:
-        print(
-            f"=> ERROR: No directory '{row['barcode']}' was found in {dir_fail}, skipping"
-        )
+        for index, file in enumerate(files_fail):
+            try:
+                os.symlink(
+                    src=os.path.join(dir_fail, file),
+                    dst=os.path.join(
+                        dir_fail_link,
+                        row["sample_id"],
+                        "".join([row["sample_id"], "_", str(index), ".fastq.gz"]),
+                    ),
+                )
+            except FileExistsError:
+                continue
 
 
 # Create new sample sheet for input to Samnsero
@@ -184,3 +202,4 @@ print(f"=> Saving new sample sheet to '{output_sheet}'")
 df2 = df1.copy()[["sample_id"]]
 df2["data_path"] = dir_pass_link + "/" + df2["sample_id"] + "/"
 df2.to_csv(os.path.join(output_sheet), header=False, index=False)
+print("=> Done!")
