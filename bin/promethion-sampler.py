@@ -167,10 +167,6 @@ for index, row in df1.iterrows():
         print(
             f"=> ERROR: No directory '{row['barcode']}' was found in {dir_pass}, skipping"
         )
-    except OSError:
-        print(
-            f"=> ERROR: Link '{row['sample_id']}' already exists in {dir_pass_link}, skipping"
-        )
 
     try:
         os.symlink(
@@ -180,10 +176,6 @@ for index, row in df1.iterrows():
     except FileNotFoundError:
         print(
             f"=> ERROR: No directory '{row['barcode']}' was found in {dir_fail}, skipping"
-        )
-    except OSError:
-        print(
-            f"=> ERROR: Link '{row['sample_id']}' already exists in {dir_fail_link}, skipping"
         )
 
 
