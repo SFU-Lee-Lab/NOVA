@@ -1,22 +1,20 @@
 #!/usr/bin/env python3
 import argparse
-import glob
 import os
 import re
 import sys
 from pathlib import Path
 
 import pandas as pd
-from natsort import natsorted
 
-parser = argparse.ArgumentParser(description="Parameters")
+parser = argparse.ArgumentParser(description="Part of the NOVA pipeline: organize Nanopore data and create a sample sheet for genome assembly.")
 
 parser.add_argument(
     "--directory",
     "-d",
     type=str,
     required=True,
-    help="Path to directory for the sequencing run. Must contain the sub-directory 'fastq_pass'.",
+    help="Path to directory for the sequencing run. Must contain the sub-directories 'fastq_pass' and 'fastq_fail'.",
 )
 
 parser.add_argument(
@@ -24,7 +22,7 @@ parser.add_argument(
     "-s",
     type=str,
     required=True,
-    help="Path and name for the sample sheet (CSV or XLSX)",
+    help="Path and name for the sample sheet (CSV or XLSX).",
 )
 
 parser.add_argument(
@@ -32,7 +30,7 @@ parser.add_argument(
     "-n",
     default=1,
     type=int,
-    help="Sheet number for XLSX files (default: first sheet, 1)",
+    help="Sheet number for XLSX files (default: first sheet, 1).",
 )
 
 parser.add_argument(
@@ -40,7 +38,23 @@ parser.add_argument(
     "-o",
     type=str,
     required=True,
-    help="Path and name for the output CSV sample sheet",
+    help="Path and name for the output CSV sample sheet.",
+)
+
+parser.add_argument(
+    "--output_dir_pass",
+    "-p",
+    default="fastq_pass_link",
+    type=str,
+    help="Directory of links between sample IDs and corresponding barcode directories. Can be an absolute or relative path; in the latter case, it will start inside the provided run directory. Defaults to 'fastq_pass_link'."
+)
+
+parser.add_argument(
+    "--output_dir_fail",
+    "-f",
+    default="fastq_fail_link",
+    type=str,
+    help="Directory of links between sample IDs and corresponding barcode directories. Can be an absolute or relative path; in the latter case, it will start inside the provided run directory. Defaults to 'fastq_fail_link'."
 )
 
 args = parser.parse_args()
@@ -49,16 +63,25 @@ directory = args.directory
 sample_sheet = args.sample_sheet
 sheet_number = args.sheet_number
 output_sheet = args.output_sheet
+output_dir_pass = args.output_dir_pass
+output_dir_fail = args.output_dir_fail
 
 
 # Make sure we have a true, absolute path, not a symlink
 directory = str(Path(directory).resolve())
 
 dir_pass = os.path.abspath(os.path.join(directory, "fastq_pass"))
-dir_pass_link = os.path.abspath(os.path.join(directory, "fastq_pass_link"))
-
 dir_fail = os.path.abspath(os.path.join(directory, "fastq_fail"))
-dir_fail_link = os.path.abspath(os.path.join(directory, "fastq_fail_link"))
+
+if Path.is_absolute(Path(output_dir_pass)):
+    dir_pass_link = Path(output_dir_pass)
+else:
+    dir_pass_link = os.path.abspath(os.path.join(directory, output_dir_pass))    
+
+if Path.is_absolute(Path(output_dir_fail)):
+    dir_fail_link = Path(output_dir_fail)
+else:
+    dir_fail_link = os.path.abspath(os.path.join(directory, output_dir_fail))
 
 
 # Check if specified directory exists
@@ -117,11 +140,12 @@ if len(bad_samples) > 0:
     sys.exit(f"\n=> ERROR: found {len(bad_samples)} bad sample ID(s): {', '.join(bad_samples)}")
 
 
-# Rename directories and files
+# Create directories to hold the symlinks
 print(f"=> Creating {df1.shape[0]} linked directories")
 
-os.mkdir(dir_pass_link)
-os.mkdir(dir_fail_link)
+# Use os.makedirs() because it supports recursive creation
+os.makedirs(dir_pass_link)
+os.makedirs(dir_fail_link)
 
 for index, row in df1.iterrows():
     try:
