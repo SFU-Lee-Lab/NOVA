@@ -167,8 +167,6 @@ for old_dir, new_dir in dirs_to_process.items():
         for sample in unique_samples:
             os.makedirs(os.path.join(new_dir, sample), exist_ok=True)
             barcodes = df1[df1["sample_id"] == sample]["barcode"]
-            # Start a counter for each sample, which may have more than one barcode
-            i=0
             for barcode in barcodes:    
                 files = natsorted(
                     glob.glob(os.path.join(old_dir, barcode, "*.fastq.gz"))
@@ -180,13 +178,11 @@ for old_dir, new_dir in dirs_to_process.items():
                             dst=os.path.join(
                                 new_dir,
                                 sample,
-                                "".join([sample, "_", str(i), ".fastq.gz"]),
+                                f"{sample}_{os.path.basename(file)}",
                             ),
                         )
                     except FileExistsError:
                         continue
-                    # Increment the counter each time we create a symlink, *across* barcodes but *within* a sample
-                    i+=1
 
 
 # Create new sample sheet for input to Samnsero
