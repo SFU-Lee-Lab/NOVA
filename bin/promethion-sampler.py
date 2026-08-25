@@ -7,7 +7,9 @@ from pathlib import Path
 
 import pandas as pd
 
-parser = argparse.ArgumentParser(description="Part of the NOVA pipeline: organize Nanopore data and create a sample sheet for genome assembly.")
+parser = argparse.ArgumentParser(
+    description="Part of the NOVA pipeline: organize Nanopore data and create a sample sheet for genome assembly."
+)
 
 parser.add_argument(
     "--directory",
@@ -46,7 +48,7 @@ parser.add_argument(
     "-p",
     default="fastq_pass_link",
     type=str,
-    help="Directory of links between sample IDs and corresponding barcode directories. Can be an absolute or relative path; in the latter case, it will start inside the provided run directory. Defaults to 'fastq_pass_link'."
+    help="Directory of links between sample IDs and corresponding barcode directories. Can be an absolute or relative path; in the latter case, it will start inside the provided run directory. Defaults to 'fastq_pass_link'.",
 )
 
 parser.add_argument(
@@ -54,7 +56,7 @@ parser.add_argument(
     "-f",
     default="fastq_fail_link",
     type=str,
-    help="Directory of links between sample IDs and corresponding barcode directories. Can be an absolute or relative path; in the latter case, it will start inside the provided run directory. Defaults to 'fastq_fail_link'."
+    help="Directory of links between sample IDs and corresponding barcode directories. Can be an absolute or relative path; in the latter case, it will start inside the provided run directory. Defaults to 'fastq_fail_link'.",
 )
 
 args = parser.parse_args()
@@ -76,7 +78,7 @@ dir_fail = os.path.abspath(os.path.join(directory, "fastq_fail"))
 if Path.is_absolute(Path(output_dir_pass)):
     dir_pass_link = Path(output_dir_pass)
 else:
-    dir_pass_link = os.path.abspath(os.path.join(directory, output_dir_pass))    
+    dir_pass_link = os.path.abspath(os.path.join(directory, output_dir_pass))
 
 if Path.is_absolute(Path(output_dir_fail)):
     dir_fail_link = Path(output_dir_fail)
@@ -93,7 +95,9 @@ if not os.path.isdir(directory):
 target_dirs = ["fastq_pass", "fastq_fail"]
 found_dirs = {name: list(Path(directory).rglob(name)) for name in target_dirs}
 for name, paths in found_dirs.items():
-    print(f"=> Found {len(paths)} '{name}' director{'y' if len(paths) == 1 else 'ies'}:")
+    print(
+        f"=> Found {len(paths)} '{name}' director{'y' if len(paths) == 1 else 'ies'}:"
+    )
     for p in paths:
         print(f"\t{p}")
 
@@ -104,14 +108,14 @@ if multiples_found:
     sys.exit(
         "=> ERROR: multiple 'fastq_fail' or 'fastq_pass' directories were found. ",
         "Please ensure specified 'directory' contains a single 'fastq_pass' and ",
-        "'fastq_fail' sub-directory."
+        "'fastq_fail' sub-directory.",
     )
 
 
 # Check file extension and read sample sheet
 ext = sample_sheet.rsplit(".", 1)[-1].lower()
 if ext == "xlsx":
-    df1 = pd.read_excel(os.path.join(sample_sheet), sheet_name=sheet_number-1)
+    df1 = pd.read_excel(os.path.join(sample_sheet), sheet_name=sheet_number - 1)
 elif ext == "csv":
     df1 = pd.read_csv(os.path.join(sample_sheet))
 else:
@@ -137,7 +141,9 @@ for sample in df1["sample_id"]:
         bad_samples.append(sample)
 
 if len(bad_samples) > 0:
-    sys.exit(f"\n=> ERROR: found {len(bad_samples)} bad sample ID(s): {', '.join(bad_samples)}")
+    sys.exit(
+        f"\n=> ERROR: found {len(bad_samples)} bad sample ID(s): {', '.join(bad_samples)}"
+    )
 
 
 # Create directories to hold the symlinks
@@ -154,9 +160,13 @@ for index, row in df1.iterrows():
             dst=os.path.join(dir_pass_link, row["sample_id"]),
         )
     except FileNotFoundError:
-        print(f"=> ERROR: No directory '{row['barcode']}' was found in {dir_pass}, skipping")
+        print(
+            f"=> ERROR: No directory '{row['barcode']}' was found in {dir_pass}, skipping"
+        )
     except OSError:
-        print(f"=> ERROR: Link '{row['sample_id']}' already exists in {dir_pass_link}, skipping")
+        print(
+            f"=> ERROR: Link '{row['sample_id']}' already exists in {dir_pass_link}, skipping"
+        )
 
     try:
         os.symlink(
@@ -164,9 +174,13 @@ for index, row in df1.iterrows():
             dst=os.path.join(dir_fail_link, row["sample_id"]),
         )
     except FileNotFoundError:
-        print(f"=> ERROR: No directory '{row['barcode']}' was found in {dir_fail}, skipping")
+        print(
+            f"=> ERROR: No directory '{row['barcode']}' was found in {dir_fail}, skipping"
+        )
     except OSError:
-        print(f"=> ERROR: Link '{row['sample_id']}' already exists in {dir_fail_link}, skipping")
+        print(
+            f"=> ERROR: Link '{row['sample_id']}' already exists in {dir_fail_link}, skipping"
+        )
 
 
 # Create new sample sheet for input to Samnsero
