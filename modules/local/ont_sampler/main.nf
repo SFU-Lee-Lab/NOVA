@@ -8,9 +8,11 @@ process ONT_SAMPLER {
     input:
     tuple val(meta), path(sheet)
     path(directory)
+    path(symlink_dir)
 
     output:
     tuple val(meta), path("*.csv")                               , emit: csv
+    path("${symlink_dir}")                                      , emit: symlink_dir
     path "*.log"                                                 , emit: log
     path "versions.yml"                                          , emit: versions
 
@@ -24,7 +26,8 @@ process ONT_SAMPLER {
     promethion-sampler.py \
         -s ${sheet} \
         -d ${directory} \
-        -o ${prefix}_samnsero.csv \
+        --output_dir_pass ${symlink_dir} \
+        -o ${prefix}.csv \
         ${args} \
         |& tee ont_sampler.log
 
