@@ -33,6 +33,11 @@
           "format": "directory-path",
           "description": "Path to the directory containing the sequencing experiment FASTQ files. The directory should contain fastq_pass and fastq_fail subdirectories."
         },
+        "symlink_directory": {
+          "type": "string",
+          "format": "directory-path",
+          "description": "Path to the output directory to store symlinks to the FASTQ files."
+        },
         "sheet_number": {
           "type": "integer",
           "default": 1,
