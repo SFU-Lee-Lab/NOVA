@@ -188,6 +188,6 @@ for old_dir, new_dir in dirs_to_process.items():
 # Create new sample sheet for input to Samnsero
 print(f"=> Saving new sample sheet to '{output_sheet}'")
 df2 = df1.copy()[["sample_id"]]
-df2["data_path"] = dir_pass_link + "/" + df2["sample_id"] + "/"
+df2["data_path"] = dir_pass + "/" + df2["sample_id"] + "/"
 df2.to_csv(os.path.join(output_sheet), header=False, index=False)
 print("=> Done!")
