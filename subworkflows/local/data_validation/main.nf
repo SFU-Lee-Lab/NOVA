@@ -23,10 +23,13 @@ workflow DATA_VALIDATION {
         // initialize data directory channel
         ch_data_dir = Channel.
             fromPath( params.data_directory, checkIfExists: true )
+        ch_symlink_dir = Channel.
+            fromPath( params.symlink_directory, checkIfExists: true )
 
         ONT_SAMPLER(
             sheet,
-            ch_data_dir
+            ch_data_dir,
+            ch_symlink_dir
         )
 
         ch_versions = ch_versions.mix(ONT_SAMPLER.out.versions)
