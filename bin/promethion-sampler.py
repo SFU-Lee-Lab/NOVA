@@ -151,38 +151,38 @@ if len(bad_samples) > 0:
 
 
 # Create directories to hold the symlinks
-unique_samples = df1["sample_id"].unique()
-print(
-    f"=> Processing files for {len(unique_samples)} samples and {len(df1['barcode'].unique())} barcodes"
-)
+# unique_samples = df1["sample_id"].unique()
+# print(
+#     f"=> Processing files for {len(unique_samples)} samples and {len(df1['barcode'].unique())} barcodes"
+# )
 
 # Use a dictionary to loop over the directories we want to process
-dirs_to_process = {dir_pass: dir_pass_link, dir_fail: dir_fail_link}
+# dirs_to_process = {dir_pass: dir_pass_link, dir_fail: dir_fail_link}
 
-for old_dir, new_dir in dirs_to_process.items():
-    if os.path.isdir(old_dir):
-        # Use os.makedirs() because it supports recursive creation
-        # Only make the "link" directories if the corresponding original directory exists
-        os.makedirs(new_dir, exist_ok=True)
-        for sample in unique_samples:
-            os.makedirs(os.path.join(new_dir, sample), exist_ok=True)
-            barcodes = df1[df1["sample_id"] == sample]["barcode"]
-            for barcode in barcodes:    
-                files = natsorted(
-                    glob.glob(os.path.join(old_dir, barcode, "*.fastq.gz"))
-                )
-                for file in files:
-                    try:
-                        os.symlink(
-                            src=os.path.join(old_dir, file),
-                            dst=os.path.join(
-                                new_dir,
-                                sample,
-                                f"{sample}_{os.path.basename(file)}",
-                            ),
-                        )
-                    except FileExistsError:
-                        continue
+# for old_dir, new_dir in dirs_to_process.items():
+#     if os.path.isdir(old_dir):
+#         # Use os.makedirs() because it supports recursive creation
+#         # Only make the "link" directories if the corresponding original directory exists
+#         os.makedirs(new_dir, exist_ok=True)
+#         for sample in unique_samples:
+#             os.makedirs(os.path.join(new_dir, sample), exist_ok=True)
+#             barcodes = df1[df1["sample_id"] == sample]["barcode"]
+#             for barcode in barcodes:    
+#                 files = natsorted(
+#                     glob.glob(os.path.join(old_dir, barcode, "*.fastq.gz"))
+#                 )
+#                 for file in files:
+#                     try:
+#                         os.symlink(
+#                             src=os.path.join(old_dir, file),
+#                             dst=os.path.join(
+#                                 new_dir,
+#                                 sample,
+#                                 f"{sample}_{os.path.basename(file)}",
+#                             ),
+#                         )
+#                     except FileExistsError:
+#                         continue
 
 
 # Create new sample sheet for input to Samnsero
