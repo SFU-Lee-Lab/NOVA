@@ -35,7 +35,6 @@
         },
         "symlink_directory": {
           "type": "string",
-          "format": "directory-path",
           "description": "Path to the output directory to store symlinks to the FASTQ files."
         },
         "sheet_number": {
