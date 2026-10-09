@@ -129,7 +129,7 @@ else:
 
 
 # Check for column names
-for c in ["sample_id", "barcode"]:
+for c in ["barcode", "alias"]:
     if not c in df1.columns:
         sys.exit(f"=> ERROR: Sample sheet is missing column {c}")
 
@@ -140,13 +140,13 @@ for c in ["sample_id", "barcode"]:
 valid_id = re.compile("^[A-Z]{2,5}[0-9]{2,5}(?:-(?:[a-z]+|[0-9]+))?$")
 bad_samples = []
 
-for sample in df1["sample_id"]:
+for sample in df1["alias"]:
     if not valid_id.match(sample):
         bad_samples.append(sample)
 
 if len(bad_samples) > 0:
     sys.exit(
-        f"\n=> ERROR: found {len(bad_samples)} bad sample ID(s): {', '.join(bad_samples)}"
+        f"\n=> ERROR: found {len(bad_samples)} bad alias(es): {', '.join(bad_samples)}"
     )
 
 
@@ -185,9 +185,9 @@ if len(bad_samples) > 0:
 #                         continue
 
 
-# Create new sample sheet for input to Samnsero
+# Create new sample sheet for input to AssembLEE
 print(f"=> Saving new sample sheet to '{output_sheet}'")
-df2 = df1[["sample_id"]].copy()
-df2["data_path"] = dir_pass + "/" + df1["barcode"].astype(str) + "/"
+df2 = df1[["alias"]].copy()
+df2["data_path"] = dir_pass + "/" + df1["alias"].astype(str) + "/"
 df2.to_csv(os.path.join(output_sheet), header=False, index=False)
 print("=> Done!")
