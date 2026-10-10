@@ -41,6 +41,7 @@ Now, you can run the pipeline using:
 nextflow run SFU-Lee-Lab/NOVA \
    -profile <docker/singularity/.../institute> \
    --input samplesheet.csv \
+   --data_directory <path_to_sequencing_run> \
    --out_dir <out_dir>
 ```
 
