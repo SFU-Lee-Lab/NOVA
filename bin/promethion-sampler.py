@@ -51,8 +51,8 @@ parser.add_argument(
     default=None,
     type=str,
         help=(
-        "Optional. If specified, create a directory of sample sub-directories containing "
-        "relative symlinks back to the original fastqs, and point the output sample sheet "
+        "Optional. Must be an absolute path if specified, creates a directory of sample sub-directories "
+        "containing relative symlinks back to the original fastqs, and point the output sample sheet "
         "at those directories."
         "If omitted, no symlinks are made and the output sample sheet points at the "
         "original fastq directories."
@@ -135,6 +135,7 @@ if len(bad_samples) > 0:
 link_dir_parent = None
 if symlink_directory is not None:
     link_dir_parent = os.path.abspath(symlink_directory)
+    # link_dir_parent = Path(symlink_directory).resolve()
     os.makedirs(link_dir_parent, exist_ok=True)
     print(f"=> Will make symlinks in '{link_dir_parent}'")
 else:
