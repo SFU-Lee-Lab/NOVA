@@ -46,19 +46,17 @@ parser.add_argument(
 )
 
 parser.add_argument(
-    "--output_dir_pass",
-    "-p",
-    default="fastq_pass_link",
+    "--symlink_directory",
+    "-l",
+    default=None,
     type=str,
-    help="Directory of links between sample IDs and corresponding barcode directories. Can be an absolute or relative path; in the latter case, it will start inside the provided run directory. Defaults to 'fastq_pass_link'.",
-)
-
-parser.add_argument(
-    "--output_dir_fail",
-    "-f",
-    default="fastq_fail_link",
-    type=str,
-    help="Directory of links between sample IDs and corresponding barcode directories. Can be an absolute or relative path; in the latter case, it will start inside the provided run directory. Defaults to 'fastq_fail_link'.",
+        help=(
+        "Optional. If specified, create a directory of sample sub-directories containing "
+        "relative symlinks back to the original fastqs, and point the output sample sheet "
+        "at those directories."
+        "If omitted, no symlinks are made and the output sample sheet points at the "
+        "original fastq directories."
+    ),
 )
 
 args = parser.parse_args()
@@ -67,8 +65,7 @@ directory = args.directory
 sample_sheet = args.sample_sheet
 sheet_number = args.sheet_number
 output_sheet = args.output_sheet
-output_dir_pass = args.output_dir_pass
-output_dir_fail = args.output_dir_fail
+symlink_directory = args.symlink_directory
 
 
 # Make sure we have a true, absolute path, not a symlink, and it exists
@@ -77,43 +74,26 @@ if not os.path.isdir(directory):
     sys.exit("\n=> ERROR: Specified directory does not exist.")
 
 
-# Setup input directories within main directory
-dir_pass = os.path.abspath(os.path.join(directory, "fastq_pass"))
-dir_fail = os.path.abspath(os.path.join(directory, "fastq_fail"))
+# check for single fastq_pass directory
+pass_dirs = [p for p in Path(directory).rglob("fastq_pass") if p.is_dir()]
 
-if Path.is_absolute(Path(output_dir_pass)):
-    dir_pass_link = Path(output_dir_pass)
-else:
-    dir_pass_link = os.path.abspath(os.path.join(directory, output_dir_pass))
+print(
+    f"=> Found {len(pass_dirs)} 'fastq_pass' "
+    f"director{'y' if len(pass_dirs) == 1 else 'ies'}"
+    f"{':' if pass_dirs else ''}"
+)
+for p in pass_dirs:
+    print(f"\t{p}")
 
-if Path.is_absolute(Path(output_dir_fail)):
-    dir_fail_link = Path(output_dir_fail)
-else:
-    dir_fail_link = os.path.abspath(os.path.join(directory, output_dir_fail))
-
-
-# Check that target directory contains only one "fastq_pass" and one "fastq_fail" folder
-target_dirs = ["fastq_pass", "fastq_fail"]
-found_dirs = {name: list(Path(directory).rglob(name)) for name in target_dirs}
-for name, paths in found_dirs.items():
-    if len(paths) == 0:
-        print(f"=> Found 0 '{name}' directories")
-    else:
-        print(
-            f"=> Found {len(paths)} '{name}' director{'y' if len(paths) == 1 else 'ies'}:"
-        )
-        for p in paths:
-            print(f"\t{p}")
-
-
-# Check for presence of multiple fastq_fail and fastq_pass directories
-multiples_found = any(len(paths) > 1 for paths in found_dirs.values())
-if multiples_found:
+if len(pass_dirs) != 1:
     sys.exit(
-        "=> ERROR: multiple 'fastq_fail' or 'fastq_pass' directories were found. ",
-        "Please ensure specified 'directory' contains a single 'fastq_pass' and ",
-        "'fastq_fail' sub-directory.",
+        "=> ERROR: expected exactly 1 'fastq_pass' directory in "
+        f"'{directory}', found {len(pass_dirs)}. Please ensure the specified "
+        "'directory' contains a single 'fastq_pass' sub-directory."
     )
+
+# Set the fastq_pass directory within main directory
+dir_pass = str(pass_dirs[0])
 
 
 # Check file extension and read sample sheet
@@ -150,44 +130,65 @@ if len(bad_samples) > 0:
     )
 
 
-# Create directories to hold the symlinks
-# unique_samples = df1["sample_id"].unique()
-# print(
-#     f"=> Processing files for {len(unique_samples)} samples and {len(df1['barcode'].unique())} barcodes"
-# )
+# Only make symlinks if --symlink_directory was given.
+# make the symlink parent directory (if necessary)
+link_dir_parent = None
+if symlink_directory is not None:
+    link_dir_parent = os.path.abspath(symlink_directory)
+    os.makedirs(link_dir_parent, exist_ok=True)
+    print(f"=> Will make symlinks in '{link_dir_parent}'")
+else:
+    print("=> No --symlink_directory specified: skipping symlinks")
 
-# Use a dictionary to loop over the directories we want to process
-# dirs_to_process = {dir_pass: dir_pass_link, dir_fail: dir_fail_link}
 
-# for old_dir, new_dir in dirs_to_process.items():
-#     if os.path.isdir(old_dir):
-#         # Use os.makedirs() because it supports recursive creation
-#         # Only make the "link" directories if the corresponding original directory exists
-#         os.makedirs(new_dir, exist_ok=True)
-#         for sample in unique_samples:
-#             os.makedirs(os.path.join(new_dir, sample), exist_ok=True)
-#             barcodes = df1[df1["sample_id"] == sample]["barcode"]
-#             for barcode in barcodes:    
-#                 files = natsorted(
-#                     glob.glob(os.path.join(old_dir, barcode, "*.fastq.gz"))
-#                 )
-#                 for file in files:
-#                     try:
-#                         os.symlink(
-#                             src=os.path.join(old_dir, file),
-#                             dst=os.path.join(
-#                                 new_dir,
-#                                 sample,
-#                                 f"{sample}_{os.path.basename(file)}",
-#                             ),
-#                         )
-#                     except FileExistsError:
-#                         continue
+print(f"=> Processing files for {len(df1)} samples")
+
+
+# Directory holding each sample's fastqs, in the same order as the rows of df1.
+# This is the symlink directory if linking, otherwise the original fastq directory.
+data_paths = []
+
+for sample, barcode in zip(df1["alias"], df1["barcode"]):
+    # find all the fastqs within the original sample data directory
+    # if data directory contains folder for alias, use it, otherwise, get the corresponding barcode
+    alias_dir = os.path.join(dir_pass, sample)
+    src_dir = alias_dir if os.path.isdir(alias_dir) else os.path.join(dir_pass, barcode)
+    files = natsorted(glob.glob(os.path.join(src_dir, "*.fastq.gz")))
+    print(f"Found {len(files)} files for {sample}: \n{files}")
+    if not files:
+        print(f"=> WARNING: no .fastq.gz files found for {sample} in {src_dir}")
+ 
+    # not linking: the sample sheet will point straight at the original directory
+    if link_dir_parent is None:
+        data_paths.append(src_dir)
+        continue
+ 
+    # create the sample directory within the symlink parent directory (if necessary)
+    link_dir_sample = os.path.join(link_dir_parent, sample)
+    os.makedirs(link_dir_sample, exist_ok=True)
+ 
+    # relative link targets are resolved from the link's own directory
+    link_start = os.path.realpath(link_dir_sample)
+    for file in files:
+        try:
+            os.symlink(
+                src=os.path.relpath(os.path.abspath(file), start=link_start),
+                dst=os.path.join(link_dir_sample, os.path.basename(file)),
+            )
+            print(f"Linked {os.path.basename(file)} for {sample}")
+        except FileExistsError:
+            continue
+ 
+    data_paths.append(link_dir_sample)
+ 
+if link_dir_parent is not None:
+    print(f"Finished making symlink directories in {link_dir_parent}")
 
 
 # Create new sample sheet for input to AssembLEE
 print(f"=> Saving new sample sheet to '{output_sheet}'")
 df2 = df1[["alias"]].copy()
-df2["data_path"] = dir_pass + "/" + df1["alias"].astype(str) + "/"
+df2["data_path"] = [p.rstrip("/") + "/" for p in data_paths]
+df2 = df2.sort_values("alias", kind="stable")
 df2.to_csv(os.path.join(output_sheet), header=False, index=False)
 print("=> Done!")

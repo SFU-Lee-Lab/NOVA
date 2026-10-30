@@ -8,11 +8,10 @@ process ONT_SAMPLER {
     input:
     tuple val(meta), path(sheet)
     path(directory)
-    //path(symlink_dir)
+    path(symlink_dir)
 
     output:
     tuple val(meta), path("*.csv")                               , emit: csv
-    //path("${symlink_dir}")                                      , emit: symlink_dir
     path "*.log"                                                 , emit: log
     path "versions.yml"                                          , emit: versions
 
